@@ -1,0 +1,15 @@
+{
+  "schemaVersion": 1,
+  "id": "prometheus.game-picker",
+  "name": "Game picker",
+  "version": "1.0.0",
+  "author": "prometheus",
+  "description": "Searchable launcher for wine games, ROMs, Steam, and Minecraft",
+  "kinds": [
+    "overlay"
+  ],
+  "keepLoaded": true,
+  "entryPoints": {
+    "overlay": "GamePicker.qml"
+  }
+}
