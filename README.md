@@ -38,11 +38,16 @@ Keybind: `~/.dotfiles/hypr/.config/hypr/bindings.lua` —
 Highest priority: `icons/pixel/<Exact Game Name>.png` — a curated
 override checked before any convention-based lookup, for every
 platform including Steam/Minecraft (which have no other icon slot).
-This is how the current set was made: source key-art (`icons/source/`,
-gitignored, not needed at runtime) run through
-[pyxelator](https://github.com/linuskelsey/pixelator)
-(`pyxelator convert in.jpg "icons/pixel/<name>.png" --size 32 --colors 16 --scale 8`)
-to match the pixel-art look of the overlay.
+
+This is how the current set was made: drop source key-art into
+`icons/source/<Exact Game Name>.<ext>` (gitignored, not needed at
+runtime — for Minecraft this was its `.desktop` entry's icon, rasterized
+with `rsvg-convert`), then run `bin/crop-and-pixelate.py`. It
+center-crops each source to a square (side = the shorter dimension —
+landscape key-art crops to its height, portrait crops to its width) and
+runs it through [pyxelator](https://github.com/linuskelsey/pixelator)
+at a 128px grid, matching the pixel-art look of the overlay. Requires
+pyxelator checked out as a sibling repo at `~/projects/PYTHON/pyxelator`.
 
 Without an override, wine/rom entries fall back to the old convention:
 drop an image with the rom/exe's base name next to it (`sf2.png` next

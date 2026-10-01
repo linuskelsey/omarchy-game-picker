@@ -2,6 +2,7 @@ import Quickshell
 import Quickshell.Io
 import Quickshell.Wayland
 import QtQuick
+import QtQuick.Effects
 import qs.Commons
 import qs.Ui
 import "GameSearch.js" as GameSearch
@@ -28,8 +29,12 @@ Item {
 
   property color background: Color.menu.background
   property color foreground: Color.menu.text
-  property color border: Color.menu.border
-  property var borderSpec: Border.surfaceSpec("menu", "border", border, Math.max(1, Style.space(2)))
+  property color border: Color.accent
+  // Force the accent color rather than Border.surfaceSpec("menu", "border", ...),
+  // which looks up the theme's own [menu] border token first and only falls
+  // back to our color when the theme leaves it unset — this theme sets one,
+  // so the fallback color was always being silently ignored.
+  property var borderSpec: Border.flat(border, Math.max(1, Style.space(2)))
   property color scrim: Color.menu.scrim
   property color selectedBackground: Color.menu.selectedBackground
   property color selectedText: Color.menu.selectedText
@@ -264,32 +269,59 @@ Item {
                 spacing: Style.space(12)
 
                 Item {
+                  id: iconFrame
                   width: Style.space(36)
                   height: Style.space(36)
                   anchors.verticalCenter: parent.verticalCenter
 
-                  Image {
+                  Rectangle {
+                    id: iconMask
                     anchors.fill: parent
-                    visible: row.icon !== ""
-                    source: row.icon !== "" ? Qt.resolvedUrl("file://" + row.icon) : ""
-                    fillMode: Image.PreserveAspectCrop
-                    asynchronous: true
+                    radius: Style.space(6)
+                    color: "white"
+                    visible: false
+                    layer.enabled: true
+                  }
+
+                  Item {
+                    anchors.fill: parent
+                    layer.enabled: true
+                    layer.smooth: true
+                    layer.effect: MultiEffect {
+                      maskEnabled: true
+                      maskSource: iconMask
+                    }
+
+                    Image {
+                      anchors.fill: parent
+                      visible: row.icon !== ""
+                      source: row.icon !== "" ? Qt.resolvedUrl("file://" + row.icon) : ""
+                      fillMode: Image.PreserveAspectCrop
+                      asynchronous: true
+                    }
+
+                    Rectangle {
+                      anchors.fill: parent
+                      visible: row.icon === ""
+                      color: Qt.darker(root.background, 1.3)
+
+                      Text {
+                        anchors.centerIn: parent
+                        text: GameSearch.platformGlyph(row.platform)
+                        color: row.hasCursor ? root.selectedText : root.foreground
+                        font.family: root.fontFamily
+                        font.pixelSize: Style.font.subtitle
+                        font.bold: true
+                      }
+                    }
                   }
 
                   Rectangle {
                     anchors.fill: parent
-                    visible: row.icon === ""
                     radius: Style.space(6)
-                    color: Qt.darker(root.background, 1.3)
-
-                    Text {
-                      anchors.centerIn: parent
-                      text: GameSearch.platformGlyph(row.platform)
-                      color: row.hasCursor ? root.selectedText : root.foreground
-                      font.family: root.fontFamily
-                      font.pixelSize: Style.font.subtitle
-                      font.bold: true
-                    }
+                    color: "transparent"
+                    border.width: Math.max(1, Style.space(1))
+                    border.color: Color.accent
                   }
                 }
 
