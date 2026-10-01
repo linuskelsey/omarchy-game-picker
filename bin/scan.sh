@@ -9,6 +9,8 @@ WINE_DIR="$HOME/play/games"
 ROMS_DIR="$HOME/play/roms"
 STEAM_DIR="$HOME/.local/share/Steam/steamapps"
 STEAM_LIBRARY_CACHE="$HOME/.local/share/Steam/appcache/librarycache"
+PLUGIN_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+ICON_OVERRIDE_DIR="$PLUGIN_DIR/icons/pixel"
 
 declare -A CORE_FOR_PLATFORM=(
   [arcade]="mame"
@@ -66,6 +68,13 @@ add_entry() {
   entries+=("$1")
 }
 
+# icon_override <exact-game-name> — curated pixel-art icon, takes priority
+# over whatever convention-based lookup a platform would otherwise do.
+icon_override() {
+  local f="$ICON_OVERRIDE_DIR/$1.png"
+  [[ -f "$f" ]] && echo "$f"
+}
+
 # --- Wine games: ~/play/games/<name>/ -------------------------------------
 if [[ -d "$WINE_DIR" ]]; then
   while IFS= read -r -d '' dir; do
@@ -85,10 +94,12 @@ if [[ -d "$WINE_DIR" ]]; then
     done < <(find "$dir" -iname '*.exe' -print0 2>/dev/null)
     [[ -z "$exe" ]] && continue
 
-    icon="$(icon_for_path "$dir/icon")"
+    pretty="$(pretty_name "$name")"
+    icon="$(icon_override "$pretty")"
+    [[ -z "$icon" ]] && icon="$(icon_for_path "$dir/icon")"
     [[ -z "$icon" ]] && icon="$(icon_for_path "$dir/${name}")"
 
-    entry="$(jq -n --arg name "$(pretty_name "$name")" --arg icon "$icon" \
+    entry="$(jq -n --arg name "$pretty" --arg icon "$icon" \
       --arg dir "$dir" --arg exe "$exe" \
       '{name:$name, platform:"Wine", icon:$icon, launch:{type:"wine", dir:$dir, exe:$exe}}')"
     add_entry "$entry"
@@ -114,7 +125,8 @@ for platform in "${!CORE_FOR_PLATFORM[@]}"; do
       name="$(pretty_name "$stem")"
     fi
 
-    icon="$(icon_for_path "$rom_dir/$stem")"
+    icon="$(icon_override "$name")"
+    [[ -z "$icon" ]] && icon="$(icon_for_path "$rom_dir/$stem")"
 
     entry="$(jq -n --arg name "$name" --arg platform "$label" --arg icon "$icon" \
       --arg core "$core" --arg rom "$rom" \
@@ -136,9 +148,11 @@ if [[ -d "$STEAM_DIR" ]]; then
     [[ "$name" == "SteamVR" ]] && continue
 
     full_install_dir="$STEAM_DIR/common/$installdir"
-    icon=""
-    header="$STEAM_LIBRARY_CACHE/$appid/header.jpg"
-    [[ -f "$header" ]] && icon="$header"
+    icon="$(icon_override "$name")"
+    if [[ -z "$icon" ]]; then
+      header="$STEAM_LIBRARY_CACHE/$appid/header.jpg"
+      [[ -f "$header" ]] && icon="$header"
+    fi
 
     native=""
     if [[ -d "$full_install_dir" ]]; then
@@ -161,7 +175,8 @@ fi
 
 # --- Minecraft: fixed entry, launched via its desktop file ------------------
 if [[ -f "$HOME/.local/share/applications/minecraft-launcher.desktop" ]]; then
-  entry="$(jq -n '{name:"Minecraft", platform:"Minecraft", icon:"", launch:{type:"desktop", id:"minecraft-launcher"}}')"
+  mc_icon="$(icon_override "Minecraft")"
+  entry="$(jq -n --arg icon "$mc_icon" '{name:"Minecraft", platform:"Minecraft", icon:$icon, launch:{type:"desktop", id:"minecraft-launcher"}}')"
   add_entry "$entry"
 fi
 

@@ -35,8 +35,18 @@ Keybind: `~/.dotfiles/hypr/.config/hypr/bindings.lua` —
 
 ## Adding icons
 
-Same conventions as before: drop an image with the rom/exe's base name
-next to it (`sf2.png` next to `sf2.zip`), or a same-named folder of
-images (one gets picked deterministically by path hash). MAME/arcade
-roms can't be renamed (matches driver shortname), so use a `<base>.name`
-sidecar text file for the display name instead.
+Highest priority: `icons/pixel/<Exact Game Name>.png` — a curated
+override checked before any convention-based lookup, for every
+platform including Steam/Minecraft (which have no other icon slot).
+This is how the current set was made: source key-art (`icons/source/`,
+gitignored, not needed at runtime) run through
+[pyxelator](https://github.com/linuskelsey/pixelator)
+(`pyxelator convert in.jpg "icons/pixel/<name>.png" --size 32 --colors 16 --scale 8`)
+to match the pixel-art look of the overlay.
+
+Without an override, wine/rom entries fall back to the old convention:
+drop an image with the rom/exe's base name next to it (`sf2.png` next
+to `sf2.zip`), or a same-named folder of images (one gets picked
+deterministically by path hash). MAME/arcade roms can't be renamed
+(matches driver shortname), so use a `<base>.name` sidecar text file
+for the display name instead.
