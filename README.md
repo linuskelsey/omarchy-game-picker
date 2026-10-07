@@ -23,6 +23,23 @@ and Minecraft; type to filter, arrow keys + Enter (or click) to launch.
   two cases need a `cd` into the game directory first; everything else
   (`retroarch`, `steam -applaunch`, `gtk-launch`) is called directly.
 
+## Gamepad / IPC control
+
+The plugin exposes an `IpcHandler` with target `game-picker`, so anything
+(e.g. a DualSense daemon) can drive it without synthetic key events:
+
+```
+omarchy-shell game-picker open | close | toggle | isOpen
+omarchy-shell game-picker move <+1|-1>     # wraps
+omarchy-shell game-picker page <+1|-1>     # clamped, ~one screenful
+omarchy-shell game-picker activate         # launch highlighted entry
+```
+
+The overlay's layer-shell namespace is `prometheus-game-picker`, which is
+what an external controller can poll via `hyprctl layers -j` to know when
+the picker has closed. After editing the QML, restart the shell
+(`omarchy-restart-shell`) for the handler to reload.
+
 ## Installing
 
 Source of truth lives here (`~/projects/QML/game-picker`). The shell

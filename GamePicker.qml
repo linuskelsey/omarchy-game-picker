@@ -110,6 +110,14 @@ Item {
     resultList.positionViewAtIndex(selectedIndex, ListView.Contain)
   }
 
+  // Jump by roughly one screenful, clamped (no wrap, unlike move()).
+  function page(direction) {
+    if (displayModel.count === 0) return
+    var step = Math.max(1, Math.floor(resultList.height / (root.rowHeight + Style.space(4))) - 1)
+    selectedIndex = Math.max(0, Math.min(displayModel.count - 1, selectedIndex + direction * step))
+    resultList.positionViewAtIndex(selectedIndex, ListView.Contain)
+  }
+
   function activateIndex(index) {
     if (index < 0 || index >= displayModel.count) return
     var row = displayModel.get(index)
@@ -138,6 +146,20 @@ Item {
         Quickshell.execDetached(["uwsm-app", "--", "gtk-launch", launch.id + ".desktop"])
         break
     }
+  }
+
+  // Gamepad control (driven by the dualsense-ps-menu daemon). Separate target
+  // from the host's "shell" one so the daemon can open/navigate/launch without
+  // synthesising keyboard events.
+  IpcHandler {
+    target: "game-picker"
+    function open(): string { if (!root.opened) root.open("{}"); return "ok" }
+    function close(): string { if (root.opened) root.dismiss(); return "ok" }
+    function toggle(): string { root.toggle(); return "ok" }
+    function move(delta: string): string { root.move(parseInt(delta) || 0); return "ok" }
+    function page(direction: string): string { root.page(parseInt(direction) || 0); return "ok" }
+    function activate(): string { root.activateIndex(root.selectedIndex); return "ok" }
+    function isOpen(): string { return root.opened ? "open" : "closed" }
   }
 
   ListModel { id: displayModel }
